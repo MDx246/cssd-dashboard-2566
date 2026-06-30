@@ -1,0 +1,724 @@
+<!doctype html>
+<html lang="th">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CSSD Executive Dashboard ปีงบประมาณ 2566</title>
+  <style>
+    :root {
+      --ink: #142c32;
+      --muted: #62747a;
+      --line: #d9e2e4;
+      --panel: #ffffff;
+      --wash: #f5f7f8;
+      --teal: #176b75;
+      --gold: #c88a2b;
+      --green: #647b43;
+      --rose: #b65c65;
+      --blue: #3d6f9f;
+      --shadow: 0 18px 48px rgba(22, 44, 50, .10);
+    }
+
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Arial, "Noto Sans Thai", "Tahoma", sans-serif;
+      color: var(--ink);
+      background:
+        linear-gradient(180deg, #eef4f5 0, #f7f8f6 330px, #ffffff 100%);
+      letter-spacing: 0;
+    }
+
+    .app {
+      width: min(1440px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 28px 0 38px;
+    }
+
+    header {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 20px;
+      align-items: end;
+      padding: 8px 0 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(28px, 4vw, 48px);
+      line-height: 1.04;
+      color: #102f37;
+      font-weight: 800;
+    }
+
+    .subtitle {
+      margin: 10px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .period {
+      border: 1px solid var(--line);
+      background: rgba(255,255,255,.74);
+      padding: 12px 16px;
+      border-radius: 8px;
+      color: var(--muted);
+      min-width: 252px;
+      text-align: right;
+    }
+
+    .period strong {
+      display: block;
+      color: var(--ink);
+      font-size: 18px;
+    }
+
+    .kpis {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .kpi {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      min-height: 138px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .kpi::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 4px;
+      background: var(--accent);
+    }
+
+    .kpi .label {
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .kpi .value {
+      margin-top: 10px;
+      font-size: clamp(24px, 2.5vw, 34px);
+      line-height: 1;
+      font-weight: 800;
+    }
+
+    .kpi .note {
+      margin-top: 10px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.35;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    .panel {
+      background: rgba(255,255,255,.92);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      box-shadow: var(--shadow);
+      padding: 18px;
+      min-width: 0;
+    }
+
+    .panel h2 {
+      margin: 0;
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    .panel-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .tabs {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #f7f9f9;
+    }
+
+    button {
+      border: 0;
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 13px;
+      cursor: pointer;
+    }
+
+    button.active {
+      background: var(--ink);
+      color: #fff;
+    }
+
+    .chart-wrap {
+      width: 100%;
+      height: 430px;
+    }
+
+    .chart-wrap.compact {
+      height: 324px;
+    }
+
+    svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+      overflow: visible;
+    }
+
+    .axis, .tick {
+      stroke: #d8e0e2;
+      stroke-width: 1;
+    }
+
+    .bar {
+      transition: opacity .18s ease, filter .18s ease;
+      cursor: pointer;
+    }
+
+    .bar:hover { filter: brightness(1.08); }
+    .label { fill: #203940; font-size: 12px; }
+    .small { fill: var(--muted); font-size: 11px; }
+    .value-text { fill: #172f36; font-size: 12px; font-weight: 700; }
+
+    .summary-split {
+      display: grid;
+      grid-template-columns: .95fr 1.05fr;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .donut-box {
+      aspect-ratio: 1 / 1;
+      max-height: 300px;
+      margin: 0 auto;
+    }
+
+    .legend {
+      display: grid;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .legend-row {
+      display: grid;
+      grid-template-columns: 14px 1fr auto;
+      gap: 9px;
+      align-items: center;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .swatch {
+      width: 14px;
+      height: 14px;
+      border-radius: 3px;
+    }
+
+    .leader {
+      margin-top: 16px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.55;
+    }
+
+    .leader strong { color: var(--ink); }
+
+    .below {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 18px;
+      margin-top: 18px;
+    }
+
+    .table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+
+    .table th {
+      text-align: left;
+      color: #fff;
+      background: #214f63;
+      padding: 9px 10px;
+      font-weight: 700;
+    }
+
+    .table td {
+      border-bottom: 1px solid #e8eef0;
+      padding: 9px 10px;
+      vertical-align: middle;
+    }
+
+    .table td.num, .table th.num {
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .barline {
+      position: relative;
+      display: block;
+      height: 7px;
+      margin-top: 5px;
+      border-radius: 20px;
+      background: #e8eef0;
+      overflow: hidden;
+    }
+
+    .barline span {
+      position: absolute;
+      inset: 0 auto 0 0;
+      width: var(--w);
+      background: var(--teal);
+      border-radius: 20px;
+    }
+
+    .insights {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 18px;
+    }
+
+    .insight {
+      border: 1px solid var(--line);
+      background: #fbfcfc;
+      border-radius: 8px;
+      padding: 14px;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 13px;
+    }
+
+    .insight strong {
+      color: var(--ink);
+      display: block;
+      margin-bottom: 5px;
+      font-size: 14px;
+    }
+
+    .tooltip {
+      position: fixed;
+      pointer-events: none;
+      opacity: 0;
+      transform: translate(-50%, calc(-100% - 12px));
+      background: #102f37;
+      color: #fff;
+      padding: 9px 11px;
+      border-radius: 8px;
+      box-shadow: 0 12px 28px rgba(0,0,0,.18);
+      font-size: 12px;
+      line-height: 1.35;
+      z-index: 10;
+      max-width: 260px;
+      transition: opacity .12s ease;
+    }
+
+    footer {
+      color: var(--muted);
+      font-size: 12px;
+      padding: 20px 0 0;
+    }
+
+    @media (max-width: 1040px) {
+      .app { width: min(100% - 28px, 920px); }
+      header, .grid, .below, .summary-split, .insights { grid-template-columns: 1fr; }
+      .period { text-align: left; }
+      .kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .chart-wrap { height: 380px; }
+    }
+
+    @media (max-width: 640px) {
+      .app { width: min(100% - 20px, 560px); padding-top: 18px; }
+      .kpis { grid-template-columns: 1fr; }
+      .panel { padding: 14px; }
+      .panel-top { align-items: flex-start; flex-direction: column; }
+      .chart-wrap { height: 340px; }
+      .table { font-size: 12px; }
+      .table th, .table td { padding: 8px 7px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <header>
+      <div>
+        <h1>CSSD Executive Dashboard</h1>
+        <p class="subtitle">สถิติจ่าย Set ทั่วไป, วัสดุสิ้นเปลือง, Resterile และภาระงานเครื่อง</p>
+      </div>
+      <div class="period">
+        <strong>ปีงบประมาณ 2566</strong>
+        1 ต.ค. 2565 - 30 ก.ย. 2566
+      </div>
+    </header>
+
+    <section class="kpis" id="kpis"></section>
+
+    <main class="grid">
+      <section class="panel">
+        <div class="panel-top">
+          <div>
+            <h2>Top ranking ตามมูลค่าจ่าย</h2>
+            <div class="hint">เลือกดูตามหน่วยงานหรือรายการ เพื่อหา cost driver สำคัญ</div>
+          </div>
+          <div class="tabs" aria-label="เลือกกราฟ">
+            <button class="active" data-mode="dept" type="button">หน่วยงาน</button>
+            <button data-mode="item" type="button">รายการ</button>
+          </div>
+        </div>
+        <div class="chart-wrap" id="rankingChart"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-top">
+          <div>
+            <h2>โครงสร้างมูลค่าจ่าย</h2>
+            <div class="hint">Set ทั่วไปเทียบวัสดุสิ้นเปลือง</div>
+          </div>
+        </div>
+        <div class="summary-split">
+          <div class="donut-box" id="donutChart"></div>
+          <div>
+            <div class="legend" id="typeLegend"></div>
+            <div class="leader">
+              <strong>มูลค่ารวม 72.98 ล้านบาท</strong>
+              Set ทั่วไปมีสัดส่วนมูลค่า 56.8% แม้จำนวนชิ้นน้อยกว่า สะท้อนรายการที่มีมูลค่าต่อหน่วยสูงกว่า
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+
+    <section class="below">
+      <section class="panel">
+        <div class="panel-top">
+          <div>
+            <h2>สัดส่วน Set / วัสดุสิ้นเปลือง รายหน่วยงาน</h2>
+            <div class="hint">หน่วยงานมูลค่าสูงสุด 12 อันดับแรก</div>
+          </div>
+        </div>
+        <div class="chart-wrap compact" id="stackChart"></div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-top">
+          <div>
+            <h2>Resterile ที่ควรติดตาม</h2>
+            <div class="hint">เรียงตามจำนวน Resterile สูงสุด</div>
+          </div>
+        </div>
+        <table class="table" id="restTable"></table>
+      </section>
+    </section>
+
+    <section class="panel" style="margin-top:18px">
+      <div class="panel-top">
+        <div>
+          <h2>เครื่องและประสิทธิภาพรอบทำงาน</h2>
+          <div class="hint">เปรียบเทียบจำนวนชิ้นผ่านเครื่องและชิ้นต่อรอบ</div>
+        </div>
+      </div>
+      <table class="table" id="machineTable"></table>
+      <div class="insights">
+        <div class="insight"><strong>จุดเริ่มวางแผน Demand</strong>ศูนย์เครื่องมือแพทย์มีมูลค่าสูงสุด 8.22 ล้านบาท ควรติดตามแนวโน้มเบิกจ่ายรายเดือนและ stock policy เป็นพิเศษ</div>
+        <div class="insight"><strong>Cost Driver หลัก</strong>Set Dressing กลางและสาย Suction รวมกัน 17.11 ล้านบาท หรือประมาณ 23.4% ของมูลค่ารวม</div>
+        <div class="insight"><strong>Resterile</strong>จำนวน Resterile รวม 1,101 ครั้ง มูลค่า 118,790 บาท อัตราต่อปริมาณจ่ายรวมยังต่ำ แต่มีบางหน่วยงานที่อัตราสูงควรเจาะดูสาเหตุ</div>
+      </div>
+    </section>
+
+    <footer>แหล่งข้อมูล: 1.สถิติจ่ายปีงบประมาณ2566.xlsx | สร้างเป็น HTML dashboard สำหรับใช้นำเสนอผู้บริหาร</footer>
+  </div>
+  <div class="tooltip" id="tooltip"></div>
+
+  <script>
+    const summary = {
+      total_value: 72976347.5,
+      total_qty: 2064119,
+      rows: 4113,
+      set_value: 41483930,
+      cons_value: 31492417.5,
+      set_qty: 349684,
+      cons_qty: 1714435,
+      rest_qty: 1101,
+      rest_value: 118790,
+      machine_cycles: 6251,
+      machine_items: 395433,
+      rest_rate_qty: 0.0005333994793904809,
+      avg_value_per_item: 35.35471913198803
+    };
+
+    const topDepartments = [
+      { label: "ศูนย์เครื่องมือแพทย์", qty: 137486, value: 8222050 },
+      { label: "ER", qty: 119661, value: 4760350 },
+      { label: "ทันตกรรม", qty: 33432, value: 4182010 },
+      { label: "OR", qty: 42000, value: 3721905 },
+      { label: "Micu 3", qty: 93998, value: 3392680 },
+      { label: "TICU", qty: 76532, value: 2661460 },
+      { label: "อายุรกรรมหญิงบน", qty: 94066, value: 2551091.5 },
+      { label: "ICU ศัลย์", qty: 73187, value: 2321800 },
+      { label: "ศัลยกรรมชาย 1", qty: 84190, value: 2319105 },
+      { label: "อายุรกรรมชายล่าง", qty: 71703, value: 2052105 }
+    ];
+
+    const topItems = [
+      { label: "Set Dressing กลาง", qty: 91013, value: 9094800 },
+      { label: "สาย Suction", qty: 133547, value: 8012820 },
+      { label: "Set Vela", qty: 9052, value: 4526000 },
+      { label: "Set ตรวจฟัน", qty: 21989, value: 3298350 },
+      { label: "เสื้อกาวน์ใช้แล้วทิ้ง", qty: 59292, value: 1778760 },
+      { label: "ถุงมือ Sterile S", qty: 163264, value: 1632640 },
+      { label: "Top 12x12", qty: 39036, value: 1561440 },
+      { label: "ก๊อส 12x12", qty: 61252, value: 1531300 },
+      { label: "ก๊อส 5 ชิ้น", qty: 100579, value: 1508685 },
+      { label: "สำลี ALC", qty: 287192, value: 1435960 }
+    ];
+
+    const deptMix = [
+      { label: "ศูนย์เครื่องมือแพทย์", set: 4679680, cons: 3542370 },
+      { label: "ER", set: 3274135, cons: 1486215 },
+      { label: "ทันตกรรม", set: 4179790, cons: 2220 },
+      { label: "OR", set: 3361570, cons: 360335 },
+      { label: "Micu 3", set: 997640, cons: 2395040 },
+      { label: "TICU", set: 1100060, cons: 1561400 },
+      { label: "อายุรกรรมหญิงบน", set: 781490, cons: 1769601.5 },
+      { label: "ICU ศัลย์", set: 801770, cons: 1520030 },
+      { label: "ศัลยกรรมชาย 1", set: 975710, cons: 1343395 },
+      { label: "อายุรกรรมชายล่าง", set: 918940, cons: 1133165 },
+      { label: "Icu Med 1", set: 806130, cons: 1171580 },
+      { label: "อายุรกรรมหญิงล่าง", set: 724260, cons: 1231132 }
+    ];
+
+    const restDept = [
+      { dept: "จิตเวช", qty: 384, value: 33170, rest_qty: 134, rest_value: 11010, rest_rate: 0.3489583333 },
+      { dept: "OPD หู คอ จมูก", qty: 3115, value: 176890, rest_qty: 78, rest_value: 6420, rest_rate: 0.0250401284 },
+      { dept: "รพ.2", qty: 462, value: 39660, rest_qty: 74, rest_value: 5390, rest_rate: 0.1601731602 },
+      { dept: "ตึกสงฆ์", qty: 696, value: 68720, rest_qty: 70, rest_value: 10410, rest_rate: 0.1005747126 },
+      { dept: "Icu Med 1", qty: 4540, value: 806130, rest_qty: 67, rest_value: 9650, rest_rate: 0.0147577093 },
+      { dept: "รพ.สต.ชีลอง", qty: 2084, value: 192000, rest_qty: 64, rest_value: 6400, rest_rate: 0.0307101727 },
+      { dept: "ER", qty: 20186, value: 3274135, rest_qty: 61, rest_value: 8480, rest_rate: 0.0030218964 },
+      { dept: "x-Ray", qty: 937, value: 53250, rest_qty: 60, rest_value: 5400, rest_rate: 0.0640341515 }
+    ];
+
+    const machines = [
+      { machine: "STEAM AUTOCLAVE", cycles: 3713, items: 323886, items_per_cycle: 87.230272 },
+      { machine: "HYDROGEN PLASMA", cycles: 2538, items: 71547, items_per_cycle: 28.190307 }
+    ];
+
+    const fmt = new Intl.NumberFormat("th-TH", { maximumFractionDigits: 0 });
+    const fmt1 = new Intl.NumberFormat("th-TH", { maximumFractionDigits: 1 });
+    const bahtM = (n) => `${(n / 1_000_000).toFixed(2)} ลบ.`;
+    const pct = (n) => `${(n * 100).toFixed(1)}%`;
+    const tooltip = document.getElementById("tooltip");
+
+    function showTip(event, html) {
+      tooltip.innerHTML = html;
+      tooltip.style.left = `${event.clientX}px`;
+      tooltip.style.top = `${event.clientY}px`;
+      tooltip.style.opacity = 1;
+    }
+
+    function hideTip() {
+      tooltip.style.opacity = 0;
+    }
+
+    function renderKpis() {
+      const cards = [
+        ["มูลค่าจ่ายรวม", "72.98 ล้านบาท", `${fmt.format(summary.rows)} รายการบันทึก`, "var(--teal)"],
+        ["จำนวนรวม", `${fmt.format(summary.total_qty)} ชิ้น/ชุด`, `เฉลี่ย ${summary.avg_value_per_item.toFixed(2)} บาทต่อหน่วย`, "var(--gold)"],
+        ["Resterile", `${fmt.format(summary.rest_qty)} ครั้ง`, `${pct(summary.rest_rate_qty)} ของจำนวนจ่าย`, "var(--green)"],
+        ["ภาระงานเครื่อง", `${fmt.format(summary.machine_cycles)} รอบ`, `${fmt.format(summary.machine_items)} ชิ้นผ่านเครื่อง`, "var(--rose)"]
+      ];
+      document.getElementById("kpis").innerHTML = cards.map(([label, value, note, color]) => `
+        <article class="kpi" style="--accent:${color}">
+          <div class="label">${label}</div>
+          <div class="value">${value}</div>
+          <div class="note">${note}</div>
+        </article>
+      `).join("");
+    }
+
+    function svg(tag, attrs = {}, children = "") {
+      const attr = Object.entries(attrs).map(([k, v]) => `${k}="${String(v)}"`).join(" ");
+      return `<${tag} ${attr}>${children}</${tag}>`;
+    }
+
+    function renderBarChart(target, rows, options = {}) {
+      const width = 820, height = 430;
+      const margin = { top: 18, right: 92, bottom: 34, left: 176 };
+      const innerW = width - margin.left - margin.right;
+      const rowH = (height - margin.top - margin.bottom) / rows.length;
+      const max = Math.max(...rows.map(d => d.value));
+      const ticks = [0, .25, .5, .75, 1].map(t => t * max);
+      const chart = [
+        ...ticks.map(t => {
+          const x = margin.left + (t / max) * innerW;
+          return svg("line", { class: "tick", x1: x, y1: margin.top, x2: x, y2: height - margin.bottom }) +
+            svg("text", { class: "small", x, y: height - 10, "text-anchor": "middle" }, bahtM(t));
+        }),
+        ...rows.map((d, i) => {
+          const y = margin.top + i * rowH + rowH * .18;
+          const barH = Math.max(10, rowH * .52);
+          const w = (d.value / max) * innerW;
+          const color = options.color || (i < 2 ? "#176b75" : "#3d6f9f");
+          const label = d.label.length > 20 ? d.label.slice(0, 19) + "…" : d.label;
+          return svg("text", { class: "label", x: margin.left - 10, y: y + barH * .72, "text-anchor": "end" }, label) +
+            svg("rect", {
+              class: "bar", x: margin.left, y, width: w, height: barH, rx: 4, fill: color,
+              "data-tip": `<b>${d.label}</b><br>มูลค่า ${fmt.format(d.value)} บาท<br>จำนวน ${fmt.format(d.qty)}`
+            }) +
+            svg("text", { class: "value-text", x: margin.left + w + 8, y: y + barH * .72 }, bahtM(d.value));
+        })
+      ].join("");
+      target.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img">${chart}</svg>`;
+      wireTips(target);
+    }
+
+    function renderDonut() {
+      const target = document.getElementById("donutChart");
+      const total = summary.total_value;
+      const setShare = summary.set_value / total;
+      const consShare = summary.cons_value / total;
+      const r = 92, cx = 150, cy = 150;
+      const c = 2 * Math.PI * r;
+      target.innerHTML = `
+        <svg viewBox="0 0 300 300" role="img">
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#e8eef0" stroke-width="38"/>
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#176b75" stroke-width="38"
+            stroke-dasharray="${setShare * c} ${c}" transform="rotate(-90 ${cx} ${cy})" stroke-linecap="round"/>
+          <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#c88a2b" stroke-width="38"
+            stroke-dasharray="${consShare * c} ${c}" stroke-dashoffset="${-setShare * c}"
+            transform="rotate(-90 ${cx} ${cy})" stroke-linecap="round"/>
+          <text x="${cx}" y="139" text-anchor="middle" style="font-size:30px;font-weight:800;fill:#142c32">72.98</text>
+          <text x="${cx}" y="164" text-anchor="middle" class="small">ล้านบาท</text>
+        </svg>`;
+      document.getElementById("typeLegend").innerHTML = [
+        ["Set ทั่วไป", summary.set_value, setShare, "#176b75"],
+        ["วัสดุสิ้นเปลือง", summary.cons_value, consShare, "#c88a2b"]
+      ].map(([name, value, share, color]) => `
+        <div class="legend-row">
+          <span class="swatch" style="background:${color}"></span>
+          <span>${name}</span>
+          <strong>${bahtM(value)} · ${pct(share)}</strong>
+        </div>
+      `).join("");
+    }
+
+    function renderStackChart() {
+      const target = document.getElementById("stackChart");
+      const width = 820, height = 324;
+      const margin = { top: 12, right: 24, bottom: 30, left: 160 };
+      const innerW = width - margin.left - margin.right;
+      const rowH = (height - margin.top - margin.bottom) / deptMix.length;
+      const max = Math.max(...deptMix.map(d => d.set + d.cons));
+      const ticks = [0, .5, 1].map(t => t * max);
+      const content = [
+        ...ticks.map(t => {
+          const x = margin.left + (t / max) * innerW;
+          return svg("line", { class: "tick", x1: x, y1: margin.top, x2: x, y2: height - margin.bottom }) +
+            svg("text", { class: "small", x, y: height - 8, "text-anchor": "middle" }, bahtM(t));
+        }),
+        ...deptMix.map((d, i) => {
+          const total = d.set + d.cons;
+          const y = margin.top + i * rowH + rowH * .23;
+          const h = Math.max(8, rowH * .50);
+          const w1 = (d.set / max) * innerW;
+          const w2 = (d.cons / max) * innerW;
+          const label = d.label.length > 18 ? d.label.slice(0, 17) + "…" : d.label;
+          return svg("text", { class: "label", x: margin.left - 9, y: y + h * .72, "text-anchor": "end" }, label) +
+            svg("rect", { class: "bar", x: margin.left, y, width: w1, height: h, rx: 3, fill: "#176b75",
+              "data-tip": `<b>${d.label}</b><br>Set ทั่วไป ${fmt.format(d.set)} บาท<br>รวม ${fmt.format(total)} บาท` }) +
+            svg("rect", { class: "bar", x: margin.left + w1, y, width: w2, height: h, rx: 3, fill: "#c88a2b",
+              "data-tip": `<b>${d.label}</b><br>วัสดุสิ้นเปลือง ${fmt.format(d.cons)} บาท<br>รวม ${fmt.format(total)} บาท` });
+        }),
+        svg("circle", { cx: margin.left, cy: height - 2, r: 5, fill: "#176b75" }),
+        svg("text", { class: "small", x: margin.left + 10, y: height + 2 }, "Set ทั่วไป"),
+        svg("circle", { cx: margin.left + 92, cy: height - 2, r: 5, fill: "#c88a2b" }),
+        svg("text", { class: "small", x: margin.left + 102, y: height + 2 }, "วัสดุสิ้นเปลือง")
+      ].join("");
+      target.innerHTML = `<svg viewBox="0 0 ${width} ${height}" role="img">${content}</svg>`;
+      wireTips(target);
+    }
+
+    function renderTables() {
+      const maxRest = Math.max(...restDept.map(d => d.rest_qty));
+      document.getElementById("restTable").innerHTML = `
+        <thead><tr><th>หน่วยงาน</th><th class="num">Resterile</th><th class="num">มูลค่า</th><th class="num">อัตรา</th></tr></thead>
+        <tbody>${restDept.map(d => `
+          <tr>
+            <td>${d.dept}<span class="barline"><span style="--w:${(d.rest_qty / maxRest * 100).toFixed(1)}%"></span></span></td>
+            <td class="num">${fmt.format(d.rest_qty)}</td>
+            <td class="num">${fmt.format(d.rest_value)}</td>
+            <td class="num">${pct(d.rest_rate)}</td>
+          </tr>`).join("")}</tbody>`;
+
+      const maxItems = Math.max(...machines.map(d => d.items));
+      document.getElementById("machineTable").innerHTML = `
+        <thead><tr><th>เครื่อง</th><th class="num">จำนวนรอบ</th><th class="num">จำนวนชิ้น</th><th class="num">ชิ้นต่อรอบ</th></tr></thead>
+        <tbody>${machines.map(d => `
+          <tr>
+            <td>${d.machine}<span class="barline"><span style="--w:${(d.items / maxItems * 100).toFixed(1)}%;background:var(--rose)"></span></span></td>
+            <td class="num">${fmt.format(d.cycles)}</td>
+            <td class="num">${fmt.format(d.items)}</td>
+            <td class="num">${fmt1.format(d.items_per_cycle)}</td>
+          </tr>`).join("")}</tbody>`;
+    }
+
+    function wireTips(scope) {
+      scope.querySelectorAll("[data-tip]").forEach(el => {
+        el.addEventListener("mousemove", e => showTip(e, el.getAttribute("data-tip")));
+        el.addEventListener("mouseleave", hideTip);
+      });
+    }
+
+    renderKpis();
+    renderDonut();
+    renderStackChart();
+    renderTables();
+    renderBarChart(document.getElementById("rankingChart"), topDepartments);
+
+    document.querySelectorAll("[data-mode]").forEach(button => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll("[data-mode]").forEach(b => b.classList.toggle("active", b === button));
+        const mode = button.dataset.mode;
+        renderBarChart(
+          document.getElementById("rankingChart"),
+          mode === "dept" ? topDepartments : topItems,
+          { color: mode === "dept" ? "#176b75" : "#b65c65" }
+        );
+      });
+    });
+  </script>
+</body>
+</html>
